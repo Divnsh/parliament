@@ -1,0 +1,69 @@
+---
+title: "Parliament (Assignment 1)"
+author: "Divyansh Madhwal"
+date: "24 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## Reading Data
+```{r}
+library(dplyr)
+library(knitr)
+parliament = read.csv("parliament.csv")
+```
+
+## 1) Identifying year wise total number of electors and voters. Also computing percentage of voters.
+```{r}
+par_year = parliament %>% group_by(YEAR) %>% summarise(AnnualVoters = sum(VOTES, na.rm=T), AnnualElectors = sum(unique(ELECTORS), na.rm=T), VotersPercentage=AnnualVoters*100/AnnualElectors)
+par_year
+```
+## 2) Identifying year wise percentage of male and female candidates
+```{r}
+SexFiltered = filter(parliament, SEX=='M' | SEX=='F')
+SexPerc = SexFiltered %>% group_by(YEAR) %>% summarise(MaleTot = sum(if_else(SEX=='M',1,0)), MalePerc= MaleTot*100/n(), FemalePerc = 100*(1-MalePerc*.01))
+SexPerc
+```
+
+## 3) Computing party-wise total number of candidates won so far & Displaying top ten parties alone
+```{r}
+CandWon = parliament %>% group_by(PARTY) %>% summarise(TotalWon = sum(if_else(Position==1,1,0))) %>% arrange(-TotalWon)
+head(CandWon,10)
+```
+
+## 4) Identifying year-wise, which party has won (based upon total number constituencies won)
+```{r}
+Const = parliament %>% group_by(YEAR,PARTY) %>% summarise(totConst = sum(if_else(Position==1,1,0)))
+ConstWon = Const %>% group_by(YEAR) %>% summarise(MaxConst= max(totConst), Party = PARTY[which.max(totConst)])
+ConstWon
+```
+
+## 5) Identifying year wise percentage of winning for female candidates
+```{r}
+FilterSex = filter(parliament, SEX=='M'| SEX=='F', Position==1)
+FemWin = FilterSex %>% group_by(YEAR) %>% summarise(totFem = sum(if_else(SEX=='F',1,0)), FemPerc = totFem*100/n())
+FemWin
+```
